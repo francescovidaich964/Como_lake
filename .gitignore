@@ -5,3 +5,5 @@
 # IPython
 profile_default/
 ipython_config.py
+
+bandit_tests/__pycache__/
