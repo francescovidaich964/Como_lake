@@ -233,7 +233,7 @@ class policy_class:
     
 class hyperpolicy:
         
-    def __init__(self, param_based=True, sigma_theta=1, theta_means=None, A=None, phi=None, psi=None):
+    def __init__(self, param_based=True, sigma_theta=1, theta_means=None, **kwargs):
         
         # Store the given parameters
         self.sigma_theta = sigma_theta
@@ -244,9 +244,12 @@ class hyperpolicy:
         if theta_means is not None:
             self.theta_mean_values = theta_means
         else:
-            self.A = A or 5*np.random.rand()
-            self.phi = phi or np.random.rand()
-            self.psi = psi or 2*np.pi*np.random.rand()
+            self.var_names = ['A', 'phi', 'psi'] 
+            for var in self.var_names:
+                if var in kwargs.keys():
+                    setattr(self, var, kwargs[var])
+                else:
+                    setattr(self, var, np.random.rand())
                
     
     # If hyperpolicy has not an already defined NS process, build it with params
