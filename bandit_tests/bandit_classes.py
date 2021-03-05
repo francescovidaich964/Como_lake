@@ -233,24 +233,28 @@ class policy_class:
     
 class hyperpolicy:
         
-    def __init__(self, param_based=True, sigma_theta=1, **kwargs):
+    def __init__(self, param_based=True, sigma_theta=1, theta_means=None, A=None, phi=None, psi=None):
         
         # Store the given parameters
         self.sigma_theta = sigma_theta
         self.stochastic = param_based
         
-        # if params that define the mean are not given, take random ones        
-        self.var_names = ['A', 'phi', 'psi'] 
-        for var in self.var_names:
-            if var in kwargs.keys():
-                setattr(self, var, kwargs[var])
-            else:
-                setattr(self, var, np.random.rand())
+        # If custom NS_process is given, define theta means with that
+        # else, use params (or generate random ones) to build the process
+        if theta_means is not None:
+            self.theta_mean_values = theta_means
+        else:
+            self.A = A or 5*np.random.rand()
+            self.phi = phi or np.random.rand()
+            self.psi = psi or 2*np.pi*np.random.rand()
                
-            
     
+    # If hyperpolicy has not an already defined NS process, build it with params
     def theta_mean(self, t):
-        return self.A * np.sin(self.phi*t + self.psi)
+        if hasattr(self, 'theta_mean_values'):
+            return self.theta_mean_values[t]
+        else:
+            return self.A * np.sin(self.phi*t + self.psi)
     
         
     def theta_pdf(self, theta, t):
@@ -263,7 +267,7 @@ class hyperpolicy:
         else:
             return self.theta_mean(t)
 
-    def sample_policy(self, t, NS_context):
+    def sample_policy(self, t, NS_context=False):
         theta = self.sample_theta(t)
         return policy_class(theta, NS_context, not(self.stochastic) )
     

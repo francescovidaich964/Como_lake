@@ -92,7 +92,7 @@ def MIS_bh_estimation(nu, thetas, rewards, alpha=10, beta=1):
 
     # Check if rewards and thetas have the same lenght
     assert len(thetas) == len(rewards), "Thetas and rewards have different lengths"
-    assert len(thetas) > alpha, "Not enough data for the estimator"
+    assert len(thetas) >= alpha, "Not enough data for the estimator"
 
     # Compute time of past rewards and prepare array for them
     t = len(thetas)
