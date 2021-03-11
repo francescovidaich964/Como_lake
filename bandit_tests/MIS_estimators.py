@@ -108,9 +108,9 @@ def MIS_bh_estimation(nu, thetas, rewards, alpha=10, beta=1):
 
 
     # Compute the weighted rewards inside the time window (with length alpha)
-    MIS_beta = np.array([np.sum([nu.theta_pdf(thetas[i], k) for k in timesteps]) for i in timesteps ])
-    IS_weights = np.array([nu.theta_pdf(thetas[i], t) for i in timesteps])
-    IS_weights = IS_weights*MIS_beta
+    MIS_beta = np.array([ nu.theta_pdf(thetas, k) for k in timesteps ]).T
+    MIS_beta = np.sum(MIS_beta, axis=1)
+    IS_weights = nu.theta_pdf(thetas, t) / MIS_beta
     IS_est  = beta_normalization * IS_weights * rewards[timesteps]
 
     return IS_est, np.sum(IS_est), IS_weights#, rewards[timesteps], beta_normalization
@@ -162,18 +162,18 @@ def MIS_bh_estimation_range(nu, thetas, rewards, range_len, alpha=10, beta=1):
 ########################################
     
     
-def renyi_normal(alpha, mu_1, sigma_1, mu_2, sigma_2):
+def renyi_normal(alpha, mu_1, sigma_1, mu_2, sigma_2, renyi_alpha=2):
     """ D_\alpha(P_1||P_2)"""
     mu_diff = (mu_1-mu_2).reshape(-1,1)
-    sigma_alpha = alpha*sigma_1 + (1-alpha)*sigma_2
+    sigma_alpha = renyi_alpha*sigma_1 + (1-renyi_alpha)*sigma_2
     renyi_div = np.linalg.det(sigma_alpha)
-    renyi_div /= (np.linalg.det(sigma_1)**(1-alpha)*np.linalg.det(sigma_2)**alpha)
-    renyi_div = -np.log(renyi_div)/(2*(alpha-1))
-    renyi_div += alpha/2*np.matmul(mu_diff.T, np.matmul(np.linalg.invsigma_alpha), mu_diff)
+    renyi_div /= (np.linalg.det(sigma_1)**(1-renyi_alpha)*np.linalg.det(sigma_2)**renyi_alpha)
+    renyi_div = -np.log(renyi_div)/(2*(renyi_alpha-1))
+    renyi_div += renyi_alpha/2*np.matmul(mu_diff.T, np.matmul(np.linalg.invsigma_alpha), mu_diff)
     return renyi_div
 
-def exp_2_renyi_div_normal_1d(mu_1, sigma_1, mu_2, sigma_2, alpha):
-    sigma_alpha = alpha*sigma_1 + (1-alpha)*sigma_2
+def exp_2_renyi_div_normal_1d(mu_1, sigma_1, mu_2, sigma_2):
+    sigma_alpha = 2*sigma_1 - sigma_2
     renyi_div = np.exp((mu_1-mu_2)**2/sigma_alpha)
     renyi_div /= np.sqrt(sigma_alpha*sigma_1/sigma_2)
     return renyi_div
@@ -181,8 +181,8 @@ def exp_2_renyi_div_normal_1d(mu_1, sigma_1, mu_2, sigma_2, alpha):
 def MIS_bh_variance(nu, thetas, rewards, R_inf=1, alpha=10, beta=1):
     t = len(thetas)
     timesteps = np.arange(t-alpha, t)
-
-    renyi_div = [exp_2_renyi_div_normal_1d(nu.theta_mean(t), nu.sigma_theta, nu.theta_mean(i), nu.sigma_theta, alpha) for i in timesteps]
+    renyi_div = [exp_2_renyi_div_normal_1d(nu.theta_mean(t), nu.sigma_theta, 
+                                           nu.theta_mean(i), nu.sigma_theta) for i in timesteps]
     renyi_div = np.array(renyi_div)
     
     return R_inf*alpha/np.sum(1/renyi_div)
