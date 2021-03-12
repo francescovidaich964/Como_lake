@@ -97,8 +97,7 @@ def MIS_bh_estimation(nu, thetas, rewards, alpha=10, beta=1):
     # Compute time of past rewards and prepare array for them
     t = len(thetas)
     timesteps = np.arange(t-alpha, t)
-    IS_est = []
-
+    
     # Compute constant normalization term (for beta<1)
     if beta<1:
         beta_normalization = np.array([beta**(t-i) for i in timesteps])
@@ -108,9 +107,9 @@ def MIS_bh_estimation(nu, thetas, rewards, alpha=10, beta=1):
 
 
     # Compute the weighted rewards inside the time window (with length alpha)
-    MIS_beta = np.array([ nu.theta_pdf(thetas, k) for k in timesteps ]).T
+    MIS_beta = np.array([ nu.theta_pdf(thetas[timesteps], k) for k in timesteps ]).T
     MIS_beta = np.sum(MIS_beta, axis=1)
-    IS_weights = nu.theta_pdf(thetas, t) / MIS_beta
+    IS_weights = nu.theta_pdf(thetas[timesteps], t) / MIS_beta
     IS_est  = beta_normalization * IS_weights * rewards[timesteps]
 
     return IS_est, np.sum(IS_est), IS_weights#, rewards[timesteps], beta_normalization
